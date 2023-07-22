@@ -10,6 +10,7 @@ import UserDetail from "./UserDetail";
 const UserTable: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [id, setId] = useState<number>(0);
+  const [lastClickedAlbums, setLastClickedAlbums] = useState<any[]>([]);
 
   useEffect(() => {
     getUsers().then((data) => setUsers(data));
@@ -62,7 +63,20 @@ const UserTable: React.FC = () => {
         columns={columns}
         pagination={paginationFactory(paginationOptions)}
       />
-      <UserDetail id={id} />
+      <UserDetail id={id} lastClickedAlbums={lastClickedAlbums} />
+
+      {lastClickedAlbums.length > 0 && (
+        <div>
+          <h2>Últimos álbumes vistos</h2>
+          <ul>
+            {lastClickedAlbums.map((album) => (
+              <li key={album.id}>
+                <Link to={`/albums/${album.id}`}>{album.title}</Link>
+              </li>
+            ))}
+          </ul>
+          </div>
+      )}
     </div>
   );
 };

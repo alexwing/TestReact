@@ -8,9 +8,13 @@ import { Button, Form, Modal } from "react-bootstrap";
 
 interface UserDetailProps {
   id: number;
+  lastClickedAlbums: any[];
 }
 
-function UserDetail({ id }: UserDetailProps): JSX.Element {
+function UserDetail({
+  id,
+  lastClickedAlbums: lastClickedAlbumsProp,
+}: UserDetailProps): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [albums, setAlbums] = useState<any[]>([]);
   const [todos, setTodos] = useState<any[]>([]);
@@ -21,6 +25,8 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
   const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<any[]>([]);
   const [showPhotosDialog, setShowPhotosDialog] = useState(false);
+
+  const [lastClickedAlbums, setLastClickedAlbums] = useState<any[]>([]);
 
   const [newTodoTitle, setNewTodoTitle] = useState("");
 
@@ -79,7 +85,10 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
     setSelectedAlbumId(albumId);
     fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
       .then((response) => response.json())
-      .then((data) => setPhotos(data))
+      .then((data) => {
+        setPhotos(data);
+        setLastClickedAlbums(lastClickedAlbumsProp.concat(data));
+      })
       .catch((error) => console.log(error));
     setShowPhotosDialog(true);
   };
