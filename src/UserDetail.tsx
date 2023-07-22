@@ -18,6 +18,10 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [todoToDeleteId, setTodoToDeleteId] = useState<number>(0);
 
+  const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null);
+  const [photos, setPhotos] = useState<any[]>([]);
+  const [showPhotosDialog, setShowPhotosDialog] = useState(false);
+
   const [newTodoTitle, setNewTodoTitle] = useState("");
 
   const handleShowDialog = () => {
@@ -58,7 +62,6 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
 
   // Función para confirmar el borrado del TODO
   const handleConfirmDelete = () => {
-
     if (todos.length > 0) {
       console.log("TODO borrado:", todoToDeleteId);
       setTodos(todos.filter((todo) => todo.id !== todoToDeleteId));
@@ -70,6 +73,15 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
   const handleCancelDelete = () => {
     // Cerrar el diálogo de confirmación sin borrar el TODO
     setShowDeleteDialog(false);
+  };
+
+  const handleAlbumClick = (albumId: number) => {
+    setSelectedAlbumId(albumId);
+    fetch(`https://jsonplaceholder.typicode.com/photos?albumId=${albumId}`)
+      .then((response) => response.json())
+      .then((data) => setPhotos(data))
+      .catch((error) => console.log(error));
+    setShowPhotosDialog(true);
   };
 
   useEffect(() => {
@@ -154,7 +166,9 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
       <ul>
         {albums.map((album) => (
           <li key={album.id}>
-            {album.title}
+            <button onClick={() => handleAlbumClick(album.id)}>
+              {album.title}
+            </button>
             {album?.photos?.length > 0 && (
               <img
                 src={album.photos[0].thumbnailUrl}
@@ -216,6 +230,20 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
             Borrar
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      <Modal show={showPhotosDialog} onHide={() => setShowPhotosDialog(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Fotos del Álbum</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {photos.map((photo) => (
+            <div key={photo.id} className="photo-container">
+              <img src={photo.url} alt={photo.title} className="photo" />
+              <p>{photo.title}</p>
+            </div>
+          ))}
+        </Modal.Body>
       </Modal>
     </div>
   );
