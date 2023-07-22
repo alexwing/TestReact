@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import User from "./interfaces/users";
+import "./UserDetail.css";
+import BootstrapTable from "react-bootstrap-table-next";
+import paginationFactory from "react-bootstrap-table2-paginator";
+import filterFactory, { textFilter } from "react-bootstrap-table2-filter";
+import { Button, Form, Modal } from "react-bootstrap";
 
 interface UserDetailProps {
   id: number;
@@ -9,6 +14,63 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [albums, setAlbums] = useState<any[]>([]);
   const [todos, setTodos] = useState<any[]>([]);
+  const [showDialog, setShowDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [todoToDeleteId, setTodoToDeleteId] = useState<number>(0);
+
+  const [newTodoTitle, setNewTodoTitle] = useState("");
+
+  const handleShowDialog = () => {
+    setShowDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setShowDialog(false);
+  };
+
+  const handleNewTodoTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewTodoTitle(e.target.value);
+  };
+
+  const handleAddTodo = () => {
+    // Validar que el título del nuevo TODO no contenga números
+    if (/^\D+$/.test(newTodoTitle)) {
+      if (todos.length > 0) {
+        console.log("Nuevo TODO agregado:", newTodoTitle);
+        const newTodoId = todos[todos.length - 1].id + 1;
+        setTodos([
+          ...todos,
+          { id: newTodoId, title: newTodoTitle, completed: false },
+        ]);
+      }
+      handleCloseDialog();
+    } else {
+      // Mostrar un mensaje de error si el título contiene números
+      alert("El título del TODO no debe contener números.");
+    }
+  };
+
+  // Función para manejar el borrado de un TODO
+  const handleDeleteTodo = (todoId: number) => {
+    setShowDeleteDialog(true);
+    setTodoToDeleteId(todoId);
+  };
+
+  // Función para confirmar el borrado del TODO
+  const handleConfirmDelete = () => {
+
+    if (todos.length > 0) {
+      console.log("TODO borrado:", todoToDeleteId);
+      setTodos(todos.filter((todo) => todo.id !== todoToDeleteId));
+    }
+    setShowDeleteDialog(false);
+  };
+
+  // Función para cancelar el borrado del TODO
+  const handleCancelDelete = () => {
+    // Cerrar el diálogo de confirmación sin borrar el TODO
+    setShowDeleteDialog(false);
+  };
 
   useEffect(() => {
     if (!id || id === 0) {
@@ -40,8 +102,46 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
     return <div>Cargando...</div>;
   }
 
+  const columns = [
+    {
+      dataField: "id",
+      text: "ID",
+      sort: true,
+    },
+    {
+      dataField: "title",
+      text: "Título",
+      filter: textFilter(),
+    },
+    {
+      dataField: "completed",
+      text: "Completado",
+      formatter: (cell: boolean) => (cell ? "Sí" : "No"),
+    },
+    {
+      dataField: "id",
+      text: "Acciones",
+      formatter: (cell: any, row: any) => {
+        return (
+          <>
+            {/* Botón de borrado */}
+            <Button variant="danger" onClick={() => handleDeleteTodo(row.id)}>
+              Borrar
+            </Button>
+          </>
+        );
+      },
+    },
+  ];
+
+  const paginationOptions = {
+    sizePerPage: 5,
+    hideSizePerPage: true,
+    hidePageListOnlyOnePage: true,
+  };
+
   return (
-    <div>
+    <div className="user-detail-panel">
       <h2>Detalles de Usuario</h2>
       <p>Nombre: {user.name}</p>
       <p>Nombre de usuario: {user.username}</p>
@@ -66,11 +166,57 @@ function UserDetail({ id }: UserDetailProps): JSX.Element {
       </ul>
 
       <h2>TODOs</h2>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.title}</li>
-        ))}
-      </ul>
+      <Button variant="primary" onClick={handleShowDialog}>
+        Agregar TODO
+      </Button>
+
+      <Modal show={showDialog} onHide={handleCloseDialog}>
+        <Modal.Header closeButton>
+          <Modal.Title>Agregar TODO</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="formTodoTitle">
+              <Form.Label>Título</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Ingrese el título del TODO"
+                value={newTodoTitle}
+                onChange={handleNewTodoTitleChange}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseDialog}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleAddTodo}>
+            Agregar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <BootstrapTable
+        keyField="id"
+        data={todos}
+        columns={columns}
+        pagination={paginationFactory(paginationOptions)}
+        filter={filterFactory()}
+      />
+      <Modal show={showDeleteDialog} onHide={handleCancelDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Borrado</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>¿Estás seguro de que deseas borrar este TODO?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCancelDelete}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDelete}>
+            Borrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
